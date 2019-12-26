@@ -152,7 +152,7 @@ void BinaryHeap::merge(BinaryHeap &bh)
 void BinaryHeap::dump(void)
 {
     int size = data.size();
-    cout << "dump : ";
+    cout << "Dump : ";
     for(int i=0; i<size; i++){
         cout << data[i] << " ";
     }
