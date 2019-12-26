@@ -3,6 +3,7 @@ Name    :leftist_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20191226 decrease-key, delete, find.
     20191226 reconstruct
     20191218 change to min heap
     20191212 Initial Version
@@ -21,6 +22,9 @@ struct Node{
     int data;
     Node *left=NULL;
     Node *right=NULL;
+
+    //for decrease-key and delete
+    Node *parent = NULL;
     int s_value=1;
 };
 
@@ -31,6 +35,9 @@ class LeftistHeap{
     //inorder and preorder traversal
     void inorderTraversal(Node *parent);
     void preorderTraversal(Node *parent);
+
+    //inorder find
+    Node *inorderFind(Node *parent, int key);
 public:
     Node *root;
     int size;
@@ -78,6 +85,8 @@ Node *LeftistHeap::meld(Node *h1, Node *h2)
 
     //recursive meld the right child
     meld_root->right = meld(meld_root->right, meld_child);
+    meld_root->parent = NULL;
+    meld_root->right->parent = meld_root;
 
     //check the leftist
     if(NULL == meld_root->left){
@@ -180,28 +189,178 @@ void LeftistHeap::merge(LeftistHeap &lh)
     size = size + lh.size;
 }
 
-//binary tree preorder traversal
-void LeftistHeap::preorderTraversal(Node *parent)
+Node *LeftistHeap::decrease_key(Node *input, int new_val)
+{
+    if(NULL == input)
+        return NULL;
+    if(input->data <= new_val)
+        return input;
+
+    input->data = new_val;
+    Node *current = input;
+    Node *parent = input->parent;
+
+    if(current == root)
+        return root;
+
+    //step 1 : cut
+    if(current == parent->left){
+        parent->left = NULL;
+    }else{
+        parent->right = NULL;
+    }
+    current->parent = NULL;
+
+    //set 2 : update the s-value
+    current = parent;
+    while(current){
+        //check the leftist
+        if(NULL == current->left){
+            current->left = current->right;
+            current->right = NULL;
+
+            //update the s-value
+            current->s_value = 1;
+        }else if(NULL == current->right){
+            //update the s-value
+            current->s_value = 1;
+        }else{
+            //check the s value
+            if(current->left->s_value < current->right->s_value){
+                Node *temp;
+                temp = current->left;
+                current->left = current->right;
+                current->right = temp;
+
+                //update the s-value
+                current->s_value = current->right->s_value + 1;
+            }else{
+                break; //until there is no need to swap
+            }
+        }
+        current = current->parent;
+    }//while
+
+    //set 3 : meld
+    root = meld(root, input);
+    return input;
+}
+
+void LeftistHeap::delete_key(Node *input)
+{
+    if(NULL == input)
+        return;
+
+    Node *current = input;
+    Node *parent = input->parent;
+
+    //step 1 : meld the two children
+    //cout << "meld" << endl;
+    if(current == root){
+        root = meld(current->left, current->right);
+    }else{
+        if(current == parent->left){
+            parent->left = meld(current->left, current->right);
+            if(NULL != parent->left)
+                parent->left->parent = parent;
+        }else{
+            parent->right = meld(current->left, current->right);
+            if(NULL != parent->right)
+                parent->right->parent = parent;
+        }
+    }
+
+    //step 2 : bottom-up update the s-value
+    //cout << "update the s-value" << endl;
+    current = parent;
+    while(current){
+        //check the leftist
+        if(NULL == current->left){
+            current->left = current->right;
+            current->right = NULL;
+
+            //update the s-value
+            current->s_value = 1;
+        }else if(NULL == current->right){
+            //update the s-value
+            current->s_value = 1;
+        }else{
+            //check the s value
+            if(current->left->s_value < current->right->s_value){
+                Node *temp;
+                temp = current->left;
+                current->left = current->right;
+                current->right = temp;
+
+                //update the s-value
+                current->s_value = current->right->s_value + 1;
+            }else{
+                break; //until there is no need to swap
+            }
+        }
+        current = current->parent;
+    }//while
+
+    //setp 3 : delete the node and update size
+    //cout << "delete" << endl;
+    delete input;
+    size--;
+}
+
+//binary tree inorder find
+Node *LeftistHeap::inorderFind(Node *parent, int key)
 {
     if(NULL == parent){
+        return NULL;
+    }
+
+    Node *result = NULL;
+    result = inorderFind(parent->left, key);
+    if(result != NULL){ //find the target
+        return result;
+    }
+    if(key == parent->data){
+        result = parent;
+    }else{
+        result = inorderFind(parent->right, key);
+    }
+
+    return result;
+}
+
+//find
+Node *LeftistHeap::find(int key)
+{
+    return inorderFind(root, key);
+}
+
+//binary tree preorder traversal
+void LeftistHeap::preorderTraversal(Node *currentNode)
+{
+    if(NULL == currentNode){
         return;
     }
 
-    cout << " " << parent->data;
-    preorderTraversal(parent->left);
-    preorderTraversal(parent->right);
+    cout << " " << currentNode->data;
+    preorderTraversal(currentNode->left);
+    preorderTraversal(currentNode->right);
 }
 
 //binary tree inorder traversal
-void LeftistHeap::inorderTraversal(Node *parent)
+void LeftistHeap::inorderTraversal(Node *currentNode)
 {
-    if(NULL == parent){
+    if(NULL == currentNode){
         return;
     }
 
-    inorderTraversal(parent->left);
-    cout << " " << parent->data;
-    inorderTraversal(parent->right);
+    inorderTraversal(currentNode->left);
+    cout << " " << currentNode->data;
+    /*/check the parents
+    if(NULL != currentNode->parent){
+        cout << " ("<< currentNode->parent->data <<") ";
+    }
+    //*/
+    inorderTraversal(currentNode->right);
 }
 
 void LeftistHeap::dump(void)
@@ -277,6 +436,38 @@ int main(int argc, char const *argv[]){
     myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
 
+    // Test decrease-key and delete
+    cout << "\n\tTest decrease-key and delete" << endl;
+    myHeap.dump();
+    cout << "decrease-key : " << temp->data << endl;
+    myHeap.decrease_key(myHeap.find(5), 1);
+    myHeap.dump();
+
+    cout << "\nBefore delete" << endl;
+    cout << "myHeap size :" << myHeap.size << endl;
+    myHeap.dump();
+
+    myHeap.delete_key(myHeap.find(7));
+    myHeap.delete_key(myHeap.find(7));
+    myHeap.delete_key(myHeap.find(6));
+    myHeap.delete_key(myHeap.find(8));
+
+    cout << "After delete" << endl;
+    cout << "myHeap size :" << myHeap.size << endl;
+    myHeap.dump();
+
+    // Find the value
+    cout << "\n\tFind the value" << endl;
+    int find_value = 9;
+    Node *find_node = myHeap.find(find_value);
+    cout << "Find Node :";
+    if(NULL != find_node){
+        cout << find_node->data << endl;
+    }else{
+        cout << "NULL" << endl;
+    }
+    
+
     // Merge the two heap
     cout << "\n\tMerge the two heap" << endl;
     int *random_data2 = random_case(6, n);
@@ -297,8 +488,7 @@ int main(int argc, char const *argv[]){
     // Heap sort
     cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
-    size = myHeap.size;
-    for(int i=0; i<size; i++){
+    while(myHeap.root){
         cout << myHeap.extract_min() << " ";
     }
     cout << endl;
