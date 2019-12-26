@@ -3,6 +3,7 @@ Name    :leftist_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20191226 reconstruct
     20191218 change to min heap
     20191212 Initial Version
 *****************************************************************/
@@ -26,19 +27,30 @@ struct Node{
 class LeftistHeap{
     //core operation
     Node *meld(Node *h1, Node *h2);
+
+    //inorder and preorder traversal
+    void inorderTraversal(Node *parent);
+    void preorderTraversal(Node *parent);
 public:
     Node *root;
     int size;
 
     //five operations
     LeftistHeap(int *arr, int size);
-    void insert(int input);
+    Node *insert(int input);
     int extract_min();
     int minimum();
     void merge(LeftistHeap &lh);
 
-    //for learning not necessary
-    void preorderTraversal(Node *parent);
+    //decrease-key and delete
+    Node *decrease_key(Node *input, int new_val);
+    void delete_key(Node *input);
+
+    //find
+    Node *find(int key);
+
+    //dump elements
+    void dump(void);
 };
 
 //core operation
@@ -120,7 +132,7 @@ LeftistHeap::LeftistHeap(int *arr, int size)
 }
 
 //insert
-void LeftistHeap::insert(int input)
+Node* LeftistHeap::insert(int input)
 {
     Node *newNode = new Node;
     newNode->data = input;
@@ -128,6 +140,8 @@ void LeftistHeap::insert(int input)
 
     //update size
     size++;
+
+    return newNode;
 }
 
 //extract_min
@@ -166,7 +180,7 @@ void LeftistHeap::merge(LeftistHeap &lh)
     size = size + lh.size;
 }
 
-//for learning not necessary
+//binary tree preorder traversal
 void LeftistHeap::preorderTraversal(Node *parent)
 {
     if(NULL == parent){
@@ -176,6 +190,30 @@ void LeftistHeap::preorderTraversal(Node *parent)
     cout << " " << parent->data;
     preorderTraversal(parent->left);
     preorderTraversal(parent->right);
+}
+
+//binary tree inorder traversal
+void LeftistHeap::inorderTraversal(Node *parent)
+{
+    if(NULL == parent){
+        return;
+    }
+
+    inorderTraversal(parent->left);
+    cout << " " << parent->data;
+    inorderTraversal(parent->right);
+}
+
+void LeftistHeap::dump(void)
+{
+    cout << "dump" << endl;
+    cout << "inorder :";
+    inorderTraversal(root);
+    cout << endl;
+
+    cout << "preorder :";
+    preorderTraversal(root);
+    cout << endl;
 }
 
 /*==============================================================*/
@@ -205,44 +243,61 @@ int *random_case(int base, int number)
 /*==============================================================*/
 int main(int argc, char const *argv[]){
     int n=SCALE;
+    int size;
 
     //generate data
     int *random_data = random_case(1, n);
 
 #if DEBUG
-    cout << "Before build Heap :";
+    cout << "Generate Data :";
     for(int i=0; i<n; i++){
         cout << random_data[i] << " ";
     }
     cout << endl;
 #endif
 
-    //constructor
+    // Initialize from the array
+    cout << "\n\tInitialize from the array" << endl;
     LeftistHeap myHeap(random_data, n);
     cout << "myHeap size :" << myHeap.size << endl;
-
     cout << "The root is :" << myHeap.root->data <<
          ", s-value :" << myHeap.root->s_value <<endl;
+    myHeap.dump();
 
-    cout << "preorder Traversal :";
-    myHeap.preorderTraversal(myHeap.root);
-    cout << endl;
+    // Insert the new element
+    cout << "\n\tInsert the new element" << endl;
+    Node *temp = myHeap.insert(7);
+    cout << "Heap size :" << myHeap.size << endl;
+    myHeap.dump();
 
-    //insertion
-    int input = 7;
-    cout << "Heap Insertion :" << input << endl;
-    myHeap.insert(input);
-    cout << "myHeap size :" << myHeap.size << endl;
+    // Test minimum and extract min
+    cout << "\n\tTest minimum and extract min" << endl;
+    cout << "minimum :" << myHeap.minimum() << endl;
+    cout << "extract_min :" << myHeap.extract_min() << endl;
+    myHeap.dump();
+    cout << "minimum :" << myHeap.minimum() << endl;
 
-    //merge
+    // Merge the two heap
+    cout << "\n\tMerge the two heap" << endl;
     int *random_data2 = random_case(6, n);
+#if DEBUG
+    cout << "Generate Data2 :";
+    for(int i=0; i<n; i++){
+        cout << random_data2[i] << " ";
+    }
+    cout << endl;
+#endif
+
     LeftistHeap myHeap2(random_data2, n);
+    //merge
     myHeap.merge(myHeap2);
     cout << "myHeap size :" << myHeap.size << endl;
+    myHeap.dump();
 
-    //extract_min
+    // Heap sort
+    cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
-    int size = myHeap.size;
+    size = myHeap.size;
     for(int i=0; i<size; i++){
         cout << myHeap.extract_min() << " ";
     }
