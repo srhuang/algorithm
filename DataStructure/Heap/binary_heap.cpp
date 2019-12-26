@@ -3,6 +3,8 @@ Name    :binary_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20191226 reconstruct
+    20191225 decrease-key and delete
     20191225 return the node when insert
     20191218 add merge operation
     20191218 change to min heap
@@ -30,6 +32,15 @@ public:
     int minimum();
     void merge(BinaryHeap &bh);
 
+    //decrease-key and delete
+    int *decrease_key(int *input, int new_val);
+    void delete_key(int *input);
+
+    //find
+    int *find(int key);
+
+    //dump elements
+    void dump(void);
 };
 
 //core operation
@@ -127,7 +138,7 @@ int BinaryHeap::minimum()
     return data[0];
 }
 
-//union
+//merge
 void BinaryHeap::merge(BinaryHeap &bh)
 {
     data.insert(data.end(), bh.data.begin(), bh.data.end());
@@ -135,6 +146,17 @@ void BinaryHeap::merge(BinaryHeap &bh)
     for(int i=(size-2)/2; i>=0; i--){
         Heapify(i);
     }
+}
+
+//dump
+void BinaryHeap::dump(void)
+{
+    int size = data.size();
+    cout << "dump : ";
+    for(int i=0; i<size; i++){
+        cout << data[i] << " ";
+    }
+    cout << endl;
 }
 
 /*==============================================================*/
@@ -170,78 +192,50 @@ int main(int argc, char const *argv[]){
     int *random_data = random_case(1, n);
 
 #if DEBUG
-    cout << "Before build Heap :";
+    cout << "Generate Data :";
     for(int i=0; i<n; i++){
         cout << random_data[i] << " ";
     }
     cout << endl;
 #endif
 
-    // test constructor
-    cout << "\n\ttest constructor" << endl;
+    // Initialize from the array
+    cout << "\n\tInitialize from the array" << endl;
     BinaryHeap myHeap(random_data, n);
-#if DEBUG
-    cout << "After build Heap :";
-    size = myHeap.data.size();
-    for(int i=0; i<size; i++){
-        cout << myHeap.data[i] << " ";
-    }
-    cout << endl;
-#endif
+    myHeap.dump();
 
-    // test insert
-    cout << "\n\ttest insert" << endl;
+    // Insert the new element
+    cout << "\n\tInsert the new element" << endl;
     int *temp = myHeap.insert(7);
     cout << "insert :" << *temp << endl;
-#if DEBUG
-    cout << "After insert :";
-    size = myHeap.data.size();
-    for(int i=0; i<size; i++){
-        cout << myHeap.data[i] << " ";
-    }
-    cout << endl;
-#endif
+    myHeap.dump();
+
+    // Test minimum and extract min
+    cout << "\n\tTest minimum and extract min" << endl;
+    cout << "minimum :" << myHeap.minimum() << endl;
+    cout << "extract_min :" << myHeap.extract_min() << endl;
+    myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
 
-    // test extract_min
-    cout << "\n\ttest extract_min" << endl;
-    int min = myHeap.extract_min();
-    cout << "extract_min :" << min << endl;
-#if DEBUG
-    cout << "After extract min :";
-    size = myHeap.data.size();
-    for(int i=0; i<size; i++){
-        cout << myHeap.data[i] << " ";
-    }
-    cout << endl;
-#endif
-    cout << "minimum :" << myHeap.minimum() << endl;
-
-    // test merge
-    cout << "\n\ttest merge" << endl;
+    // Merge the two heap
+    cout << "\n\tMerge the two heap" << endl;
     //generate another random data
     int *random_data2 = random_case(6, n);
 #if DEBUG
-    cout << "Before build Heap2 :";
+    cout << "Generate Data2 :";
     for(int i=0; i<n; i++){
         cout << random_data2[i] << " ";
     }
     cout << endl;
 #endif
-    BinaryHeap myHeap2(random_data2, n);
-    //union
-    myHeap.merge(myHeap2);
-#if DEBUG
-    cout << "After merge :";
-    size = myHeap.data.size();
-    for(int i=0; i<size; i++){
-        cout << myHeap.data[i] << " ";
-    }
-    cout << endl;
-#endif
 
-    // test sort
-    cout << "\n\ttest sort" << endl;
+    BinaryHeap myHeap2(random_data2, n);
+    //merge
+    myHeap.merge(myHeap2);
+    myHeap.dump();
+
+    // Heap sort
+    cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
     size = myHeap.data.size();
     for(int i=0; i<size; i++){
