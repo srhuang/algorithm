@@ -152,6 +152,8 @@ void BinaryHeap::merge(BinaryHeap &bh)
 //decrease key
 int BinaryHeap::decrease_key(int index, int new_val)
 {
+    if(index >= data.size())
+        return -1;
     if(data[index] <= new_val)
         return index;
 
