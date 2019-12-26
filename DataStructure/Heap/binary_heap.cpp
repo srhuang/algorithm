@@ -3,6 +3,7 @@ Name    :binary_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20191226 decrease-key, delete, find.
     20191226 reconstruct
     20191225 decrease-key and delete
     20191225 return the node when insert
@@ -27,17 +28,17 @@ public:
 
     //five operations
     BinaryHeap(int *arr, int size);
-    int *insert(int input);
+    int insert(int input);
     int extract_min();
     int minimum();
     void merge(BinaryHeap &bh);
 
     //decrease-key and delete
-    int *decrease_key(int *input, int new_val);
-    void delete_key(int *input);
+    int decrease_key(int index, int new_val);
+    void delete_key(int index);
 
     //find
-    int *find(int key);
+    int find(int key);
 
     //dump elements
     void dump(void);
@@ -91,7 +92,7 @@ BinaryHeap::BinaryHeap(int *arr, int arr_size)
 }
 
 //insert
-int *BinaryHeap::insert(int input)
+int BinaryHeap::insert(int input)
 {
     data.push_back(input);
     int size = data.size();
@@ -109,7 +110,7 @@ int *BinaryHeap::insert(int input)
         parent_index = (current_index-1)/2;
     }
 
-    return &data[current_index];
+    return current_index;
 }
 
 //extract min
@@ -146,6 +147,72 @@ void BinaryHeap::merge(BinaryHeap &bh)
     for(int i=(size-2)/2; i>=0; i--){
         Heapify(i);
     }
+}
+
+//decrease key
+int BinaryHeap::decrease_key(int index, int new_val)
+{
+    if(data[index] <= new_val)
+        return index;
+
+    data[index] = new_val;
+    int current_index = index;
+    int parent_index = (current_index-1)/2;
+
+    while(current_index > 0 && (data[parent_index] > data[current_index]))
+    {
+        //swap
+        int temp = data[current_index];
+        data[current_index] = data[parent_index];
+        data[parent_index] = temp;
+
+        //bottom-up
+        current_index = (current_index-1)/2;
+        parent_index = (current_index-1)/2;
+    }
+
+    return current_index;
+}
+
+//delete
+void BinaryHeap::delete_key(int index)
+{
+    if(index >= data.size())
+        return;
+
+    data[index] = data.back();
+    data.pop_back();
+
+    int current_index = index;
+    int parent_index = (current_index-1)/2;
+    if(data[parent_index] > data[current_index]){
+        while(current_index > 0 && (data[parent_index] > data[current_index]))
+        {
+            //swap
+            int temp = data[current_index];
+            data[current_index] = data[parent_index];
+            data[parent_index] = temp;
+
+            //bottom-up
+            current_index = (current_index-1)/2;
+            parent_index = (current_index-1)/2;
+        }
+    }else{
+        //heapify from the root
+        Heapify(current_index);
+    }
+}
+
+int BinaryHeap::find(int key)
+{
+    int size = data.size();
+    for(int i=0; i<size; i++){
+        if(key == data[i]){
+            return i;
+        }
+    }
+    
+    return -1;
 }
 
 //dump
@@ -206,8 +273,8 @@ int main(int argc, char const *argv[]){
 
     // Insert the new element
     cout << "\n\tInsert the new element" << endl;
-    int *temp = myHeap.insert(7);
-    cout << "insert :" << *temp << endl;
+    int index = myHeap.insert(7);
+    cout << "insert :" << myHeap.data[index] << endl;
     myHeap.dump();
 
     // Test minimum and extract min
@@ -216,6 +283,23 @@ int main(int argc, char const *argv[]){
     cout << "extract_min :" << myHeap.extract_min() << endl;
     myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
+
+    // Test decrease-key and delete
+    cout << "\n\tTest decrease-key and delete" << endl;
+    int index_temp = myHeap.insert(8);
+    cout << "decrease-key : " << myHeap.data[index_temp] << endl;
+    myHeap.decrease_key(index_temp, 1);
+    myHeap.dump();
+    int delete_index = 4;
+    cout << "delete : " << delete_index << endl;
+    myHeap.delete_key(delete_index);
+    myHeap.dump();
+
+    // Find the value
+    cout << "\n\tFind the value" << endl;
+    int find_value = 6;
+    int find_index = myHeap.find(find_value);
+    cout << "Find index :" << find_index << endl;
 
     // Merge the two heap
     cout << "\n\tMerge the two heap" << endl;
