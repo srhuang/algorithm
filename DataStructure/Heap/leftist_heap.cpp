@@ -206,7 +206,7 @@ void LeftistHeap::inorderTraversal(Node *parent)
 
 void LeftistHeap::dump(void)
 {
-    cout << "Dump" << endl;
+    cout << "Dump the heap : " << endl;
     cout << "inorder :";
     inorderTraversal(root);
     cout << endl;
