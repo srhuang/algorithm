@@ -3,6 +3,7 @@ Name    :binomial_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20191226 reconstruct
     20191218 Initial Version
 *****************************************************************/
 #include <iostream>
@@ -30,6 +31,9 @@ class BinomialHeap{
     //core operation
     Node *treeUnion(Node *n1, Node *n2); //must be the same degree
     void heapUnion(bool isinsert); //handle with tree union
+
+    //preorder traversal
+    void preorderTraversal(Node *parent);
 public:
     Node *minNode=NULL;
     Node *head=NULL;
@@ -37,14 +41,20 @@ public:
     //five operations
     BinomialHeap();
     BinomialHeap(int *arr, int size);
-    void insert(int input);
+    Node *insert(int input);
     int extract_min();
     int minimum();
     void merge(BinomialHeap &bh);
 
-    //for learning not necessary
-    void preorderTraversal(Node *parent);
-    void dumpTree();
+    //decrease-key and delete
+    Node *decrease_key(Node *input, int new_val);
+    void delete_key(Node *input);
+
+    //find
+    Node *find(int key);
+
+    //dump elements
+    void dump(void);
 };
 
 BinomialHeap::BinomialHeap()
@@ -127,7 +137,7 @@ BinomialHeap::BinomialHeap(int *arr, int size)
 }
 
 //insert
-void BinomialHeap::insert(int input)
+Node *BinomialHeap::insert(int input)
 {
     Node *newNode = new Node();
     newNode->data = input;
@@ -140,6 +150,8 @@ void BinomialHeap::insert(int input)
 
     //adjust the binomial heap
     heapUnion(true);
+
+    return newNode;
 }
 
 //extract_min
@@ -292,11 +304,12 @@ void BinomialHeap::preorderTraversal(Node *current)
 }
 
 //for learning not necessary
-void BinomialHeap::dumpTree()
+void BinomialHeap::dump(void)
 {
     if(NULL == head)
         return;
 
+    cout << "Dump the heap : " << endl;
     Node *current = head;
     while(current){
         cout << "B(" << current->degree << ") = ";
@@ -341,44 +354,52 @@ int main(int argc, char const *argv[]){
     int *random_data = random_case(1, n);
 
 #if DEBUG
-    cout << "Before build Heap :";
+    cout << "Generate Data :";
     for(int i=0; i<n; i++){
         cout << random_data[i] << " ";
     }
     cout << endl;
 #endif
 
-    BinomialHeap bh(random_data, n);
-    cout << "Dump the bh : " << endl;
-    bh.dumpTree();
+    // Initialize from the array
+    cout << "\n\tInitialize from the array" << endl;
+    BinomialHeap myHeap(random_data, n);
+    myHeap.dump();
 
-    //union
+    // Insert the new element
+    cout << "\n\tInsert the new element" << endl;
+    Node *temp = myHeap.insert(7);
+    myHeap.dump();
+
+    // Test minimum and extract min
+    cout << "\n\tTest minimum and extract min" << endl;
+    cout << "minimum :" << myHeap.minimum() << endl;
+    cout << "extract_min :" << myHeap.extract_min() << endl;
+    myHeap.dump();
+    cout << "minimum :" << myHeap.minimum() << endl;
+
+    // Merge the two heap
+    cout << "\n\tMerge the two heap" << endl;
     n=13;
     int *random_data2 = random_case(20, n);
-
 #if DEBUG
-    cout << "Before build Heap2 :";
+    cout << "Generate Data2 :";
     for(int i=0; i<n; i++){
         cout << random_data2[i] << " ";
     }
     cout << endl;
 #endif
 
-    BinomialHeap bh2(random_data2, n);
-    cout << "Dump the bh2 : " << endl;
-    bh2.dumpTree();
+    BinomialHeap myHeap2(random_data2, n);
+    myHeap2.dump();
+    myHeap.merge(myHeap2);
+    myHeap.dump();
 
-    cout << "Union two BinomialHeap " << endl;
-    bh.merge(bh2);
-    cout << "Dump the bh : " << endl;
-    bh.dumpTree();
-
-    cout << "min : " << bh.minimum() << endl;
-
-    //extract_min
+    // Heap sort
+    cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
-    while(bh.head){
-        cout << bh.extract_min() << " ";
+    while(myHeap.head){
+        cout << myHeap.extract_min() << " ";
     }
     cout << endl;
 
