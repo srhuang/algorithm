@@ -3,6 +3,7 @@ Name    :binomial_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20200107 find
     20191226 reconstruct
     20191218 Initial Version
 *****************************************************************/
@@ -33,7 +34,10 @@ class BinomialHeap{
     void heapUnion(bool isinsert); //handle with tree union
 
     //preorder traversal
-    void preorderTraversal(Node *parent);
+    void preorderTraversal(Node *current);
+
+    //preorder find
+    Node *preorderFind(Node *current, int key);
 public:
     Node *minNode=NULL;
     Node *head=NULL;
@@ -289,7 +293,65 @@ void BinomialHeap::merge(BinomialHeap &bh)
     heapUnion(false);
 }
 
-//for learning not necessary
+//decrease key
+Node *BinomialHeap::decrease_key(Node *input, int new_val)
+{
+
+}
+
+//delete
+void BinomialHeap::delete_key(Node *input)
+{
+
+}
+
+//binary tree preorder find
+Node *BinomialHeap::preorderFind(Node *current, int key)
+{
+    if(NULL == current){
+        return NULL;
+    }
+
+    if(key == current->data){
+        return current;
+    }
+
+    Node *result = NULL;
+    result = preorderFind(current->child, key);
+    if(NULL != result){
+        return result;
+    }
+
+    if(current->parent){ //parent of root is not NULL
+        result = preorderFind(current->sibling, key);
+    }
+
+    return result;
+}
+
+//find
+Node *BinomialHeap::find(int key)
+{
+    if(NULL == head)
+        return NULL;
+
+    Node *current = head;
+    Node *result = NULL;
+    while(current){
+        
+        //preorder find
+        result = preorderFind(current, key);
+        if(result){
+            return result;
+        }
+
+        current = current->sibling;
+    }
+
+    return result;
+}
+
+//binomial tree preorder traversal
 void BinomialHeap::preorderTraversal(Node *current)
 {
     if(NULL == current){
@@ -298,12 +360,12 @@ void BinomialHeap::preorderTraversal(Node *current)
 
     cout << " " << current->data;
     preorderTraversal(current->child);
-    if(current->parent){ //parent of root is NULL
+    if(current->parent){ //parent of root is not NULL
         preorderTraversal(current->sibling);
     }
 }
 
-//for learning not necessary
+//dump elements
 void BinomialHeap::dump(void)
 {
     if(NULL == head)
@@ -377,6 +439,20 @@ int main(int argc, char const *argv[]){
     cout << "extract_min :" << myHeap.extract_min() << endl;
     myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
+
+
+
+
+    // Find the value
+    cout << "\n\tFind the value" << endl;
+    int find_value = 7;
+    Node *find_node = myHeap.find(find_value);
+    cout << "Find Node :";
+    if(NULL != find_node){
+        cout << find_node->data << endl;
+    }else{
+        cout << "NULL" << endl;
+    }
 
     // Merge the two heap
     cout << "\n\tMerge the two heap" << endl;
