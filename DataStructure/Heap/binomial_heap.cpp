@@ -3,6 +3,7 @@ Name    :binomial_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20200107 decrease key and fix minNode bug
     20200107 find
     20191226 reconstruct
     20191218 Initial Version
@@ -96,13 +97,8 @@ void BinomialHeap::heapUnion(bool isinsert)
     Node *current = head;
     Node *next = current->sibling;
 
-    //keep tracking min
-    minNode = head;
-
     //tree union for current and next if needed
     while(next){
-        //update the min
-        minNode = (next->data < minNode->data) ? next : minNode;
 
         if((current->degree != next->degree) || 
             (next->sibling && next->sibling->degree == current->degree))
@@ -125,10 +121,17 @@ void BinomialHeap::heapUnion(bool isinsert)
             }else{
                 head = current;
             }
-            
         }
-
+        
         next = current->sibling;
+    }//while
+
+    //keep tracking the min node
+    current = head;
+    minNode = head;
+    while(current){
+        minNode = (current->data < minNode->data) ? current : minNode;
+        current = current->sibling;
     }
 }
 
@@ -171,7 +174,7 @@ int BinomialHeap::extract_min()
     Node *pre = NULL;
     Node *current = head;
     while(current){
-        if(current == target)
+        if(current == minNode)
             break;
 
         pre = current;
@@ -189,9 +192,7 @@ int BinomialHeap::extract_min()
     current = head;
     minNode = head;
     while(current){
-        if(current->data < minNode->data)
-            minNode = current;
-
+        minNode = (current->data < minNode->data) ? current : minNode;
         current = current->sibling;
     }
 
@@ -296,7 +297,27 @@ void BinomialHeap::merge(BinomialHeap &bh)
 //decrease key
 Node *BinomialHeap::decrease_key(Node *input, int new_val)
 {
+    if(NULL == input)
+        return NULL;
+    if(input->data <= new_val)
+        return input;
 
+    input->data = new_val;
+    Node *current = input;
+    Node *parent = current->parent;
+    while(parent && parent->data > current->data)
+    {
+        //swap
+        int temp = current->data;
+        current->data = parent->data;
+        parent->data = temp;
+
+        //bottom-up
+        current = parent;
+        parent = current->parent;
+    }
+
+    return current;
 }
 
 //delete
@@ -427,10 +448,11 @@ int main(int argc, char const *argv[]){
     cout << "\n\tInitialize from the array" << endl;
     BinomialHeap myHeap(random_data, n);
     myHeap.dump();
+    cout << "minimum :" << myHeap.minimum() << endl;
 
     // Insert the new element
     cout << "\n\tInsert the new element" << endl;
-    Node *temp = myHeap.insert(7);
+    Node *temp = myHeap.insert(6);
     myHeap.dump();
 
     // Test minimum and extract min
@@ -440,9 +462,28 @@ int main(int argc, char const *argv[]){
     myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
 
+    // Test decrease-key and delete
+    cout << "\n\tTest decrease-key and delete" << endl;
+    myHeap.dump();
+    int decrease_value = 7;
+    Node *decrease_node = myHeap.decrease_key(myHeap.find(7), 4);
+    cout << "decrease-key from " << decrease_value << " to " 
+        << decrease_node->data << endl;
+    myHeap.dump();
+/*
+    cout << "\nBefore delete" << endl;
+    cout << "myHeap size :" << myHeap.size << endl;
+    myHeap.dump();
 
+    myHeap.delete_key(myHeap.find(7));
+    myHeap.delete_key(myHeap.find(7));
+    myHeap.delete_key(myHeap.find(6));
+    myHeap.delete_key(myHeap.find(8));
 
-
+    cout << "After delete" << endl;
+    cout << "myHeap size :" << myHeap.size << endl;
+    myHeap.dump();
+*/
     // Find the value
     cout << "\n\tFind the value" << endl;
     int find_value = 7;
