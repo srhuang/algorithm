@@ -3,6 +3,7 @@ Name    :binomial_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20200108 delete
     20200107 decrease key and fix minNode bug
     20200107 find
     20191226 reconstruct
@@ -323,7 +324,26 @@ Node *BinomialHeap::decrease_key(Node *input, int new_val)
 //delete
 void BinomialHeap::delete_key(Node *input)
 {
+    if(NULL == input)
+        return;
 
+    Node *current = input;
+    Node *parent = current->parent;
+    while(parent)
+    {
+        //swap
+        int temp = current->data;
+        current->data = parent->data;
+        parent->data = temp;
+
+        //bottom-up
+        current = parent;
+        parent = current->parent;
+    }
+
+    //extract min
+    minNode = current;
+    extract_min();
 }
 
 //binary tree preorder find
@@ -470,20 +490,16 @@ int main(int argc, char const *argv[]){
     cout << "decrease-key from " << decrease_value << " to " 
         << decrease_node->data << endl;
     myHeap.dump();
-/*
+
     cout << "\nBefore delete" << endl;
-    cout << "myHeap size :" << myHeap.size << endl;
     myHeap.dump();
 
-    myHeap.delete_key(myHeap.find(7));
-    myHeap.delete_key(myHeap.find(7));
     myHeap.delete_key(myHeap.find(6));
-    myHeap.delete_key(myHeap.find(8));
+    myHeap.delete_key(myHeap.find(4));
 
     cout << "After delete" << endl;
-    cout << "myHeap size :" << myHeap.size << endl;
     myHeap.dump();
-*/
+
     // Find the value
     cout << "\n\tFind the value" << endl;
     int find_value = 7;
