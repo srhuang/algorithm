@@ -3,6 +3,7 @@ Name    :fibonacci_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20200222 consolidate and extract_min
     20200114 Initial Version
 *****************************************************************/
 #include <iostream>
@@ -10,7 +11,7 @@ History :
 #include <queue>
 #include <cmath>
 #define DEBUG (1)
-#define SCALE (10)
+#define SCALE (20)
 using namespace std;
 using namespace std::chrono;
 
@@ -123,27 +124,60 @@ void FibonacciHeap::consolidate(void)
     Node *current = minNode;
     Node *next_node;
     do{
+        //min node just for marking the start node
         //consolidating until every root has a distinct degree value.
         int temp_degree = current->degree;
+        next_node = current->right;
 
         //current might reassign, current->right might reassign, too.
         while(arr[temp_degree] != NULL && arr[temp_degree]!= current){
             Node *temp = arr[temp_degree];
-            current = treeUnion(temp, current);
-            if(current->data < minNode->data)
+
+            if(current==minNode){
+                current = treeUnion(temp, current);
                 minNode = current;
+            }else{
+                current = treeUnion(temp, current);
+            }
+
+            //keep the min node(start point) and next node in the root list
+            if(temp==minNode)
+                minNode = current;
+            if(temp==next_node){
+                next_node=current->right;
+            }
+
             arr[temp_degree] = NULL;
-            temp_degree = current->degree;
-            
+            temp_degree++;
         }
 
-        //update the min node
-        if(current->data < minNode->data)
-            minNode = current;
-
         arr[temp_degree] = current;
-        current = current->right;
+        current = next_node;
     }while(current != minNode);
+
+    //reconstruct the root list and find the min node    
+    minNode = NULL;
+    for(int i=0; i<=max_degree; i++){
+        if(NULL==arr[i])
+            continue;
+
+        arr[i]->left = arr[i];
+        arr[i]->right = arr[i];
+        if(NULL==minNode){
+            minNode = arr[i];
+        }else{
+            //add to the left of the min node
+            arr[i]->right = minNode;
+            arr[i]->left = minNode->left;
+            minNode->left->right = arr[i];
+            minNode->left = arr[i];
+
+            //update the min node
+            if(arr[i]->data < minNode->data){
+                minNode = arr[i];
+            }
+        }
+    }//for
 }
 
 //Initialize
@@ -213,10 +247,10 @@ int FibonacciHeap::extract_min()
             minNode->left = current;
 
             current->parent = NULL;
-
             current = next_node;
         }while(current != minNode->child);
     }
+
     //modify the min node and the root list
     Node *target = minNode;
     if(minNode == minNode->right && NULL == minNode->child){
@@ -226,6 +260,8 @@ int FibonacciHeap::extract_min()
         minNode->left->right = minNode->right;
         minNode->right->left = minNode->left;
         minNode = minNode->right;
+
+        //update the min node
         consolidate();
     }
     
@@ -494,6 +530,7 @@ int main(int argc, char const *argv[]){
     Node *temp = myHeap.insert(8);
     myHeap.insert(15);
     myHeap.insert(4);
+    myHeap.consolidate();
     myHeap.dump();
 
     // Test minimum and extract min
@@ -548,15 +585,15 @@ int main(int argc, char const *argv[]){
     myHeap2.dump();
     myHeap.merge(myHeap2);
     myHeap.dump();
-
+*/
     // Heap sort
     cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
-    while(myHeap.head){
+    while(myHeap.minNode){
         cout << myHeap.extract_min() << " ";
     }
     cout << endl;
-*/
+
     return 0;
 }
 /*==============================================================*/
