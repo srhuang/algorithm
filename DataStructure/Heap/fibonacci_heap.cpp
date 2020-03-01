@@ -3,6 +3,7 @@ Name    :fibonacci_heap
 Author  :srhuang
 Email   :lukyandy3162@gmail.com
 History :
+    20200302 complete all seven functions
     20200222 consolidate and extract_min
     20200114 Initial Version
 *****************************************************************/
@@ -32,7 +33,7 @@ struct Node{
 };
 
 class FibonacciHeap{
-public:
+private:
     //core operation
     Node *treeUnion(Node *n1, Node *n2); //must be the same degree
     void consolidate(void); //handle with tree union
@@ -41,8 +42,8 @@ public:
     void levelorderTraversal(Node *current);
 
     //preorder find
-    Node *preorderFind(Node *current, int key);
-//public:
+    Node *levelorderFind(Node *current, int key);
+public:
     Node *minNode=NULL;
     int number=0;
 
@@ -52,7 +53,11 @@ public:
     Node *insert(int input);
     int extract_min();
     int minimum();
-    void merge(FibonacciHeap &bh);
+    void merge(FibonacciHeap &fh);
+
+    //cut and cascade cut
+    void cut(Node *current, Node *parent);
+    void cascade_cut(Node *current);
 
     //decrease-key and delete
     Node *decrease_key(Node *input, int new_val);
@@ -281,59 +286,76 @@ int FibonacciHeap::minimum()
     
     return minNode->data;
 }
-/*
+
 //merge
-void FibonacciHeap::merge(FibonacciHeap &bh)
+void FibonacciHeap::merge(FibonacciHeap &fh)
 {
-    if(NULL == head){
-        head = bh.head;
-        minNode = bh.minNode;
+    if(NULL == minNode){
+        minNode = fh.minNode;
         return;
     }
 
-    if(NULL == bh.head){
+    if(NULL == fh.minNode){
         return;
     }
 
-    //類似 merge sort 的作法
-    Node *h1 = head;
-    Node *h2 = bh.head;
-    Node *current;
+    //concatenate
+    fh.minNode->left->right = minNode;
+    Node *temp = fh.minNode->left;
+    fh.minNode->left = minNode->left;
+    minNode->left->right = fh.minNode;
+    minNode->left = temp;
 
-    //pick the new head and set current node
-    if(h1->degree > h2->degree){
-        current = head = h2;
-        h2 = h2->sibling;
-    }else{
-        current = head = h1;
-        h1 = h1->sibling;
+    //update the min node
+    if(fh.minNode->data < minNode->data)
+    {
+        minNode = fh.minNode;
     }
 
-    //until one of them is running out.
-    while(h1 && h2){
-        if(h1->degree > h2->degree){
-            current->sibling = h2;
-            current = h2;
-            h2 = h2->sibling;
+    //update the numder
+    number += fh.number;
+}
+
+//Cutting a node in the heap to be placed in the root list
+void FibonacciHeap::cut(Node *current, Node *parent)
+{
+    //check if only one child of the parent
+    if(current == current->right){
+        parent->child = NULL;
+    }
+    //adjust the child of parent if need
+    if(current == parent->child){
+        parent->child = current->right;
+    }
+    //remove the current node from the parent
+    current->left->right = current->right;
+    current->right->left = current->left;
+
+    //decrease the degree of the parent
+    parent->degree--;
+
+    //add into the root list
+    current->left = minNode->left;
+    current->right = minNode;
+    minNode->left->right = current;
+    minNode->left = current;
+
+    //handle the meta data
+    current->parent = NULL;
+    current->mark = false;
+}
+
+void FibonacciHeap::cascade_cut(Node *current)
+{
+    Node *parent = current->parent;
+    if(parent != NULL){
+        if(!current->mark){
+            current->mark=true;
         }else{
-            current->sibling = h1;
-            current = h1;
-            h1 = h1->sibling;
+            cut(current, parent);
+            cascade_cut(parent);
         }
     }
-
-    //if h1 has last elements
-    if(h1){
-        current->sibling = h1;
-    }
-
-    //if h2 has last elements
-    if(h2){
-        current->sibling = h2;
-    }
-
-    //adjust the binomial heap
-    heapUnion(false);
 }
 
 //decrease key
@@ -347,16 +369,14 @@ Node *FibonacciHeap::decrease_key(Node *input, int new_val)
     input->data = new_val;
     Node *current = input;
     Node *parent = current->parent;
-    while(parent && parent->data > current->data)
-    {
-        //swap
-        int temp = current->data;
-        current->data = parent->data;
-        parent->data = temp;
+    if(parent != NULL && current->data < parent->data){
+        cut(current, parent);
+        cascade_cut(parent);
+    }
 
-        //bottom-up
-        current = parent;
-        parent = current->parent;
+    //check the min node
+    if(current->data < minNode->data){
+        minNode = current;
     }
 
     return current;
@@ -387,52 +407,57 @@ void FibonacciHeap::delete_key(Node *input)
     extract_min();
 }
 
-//binary tree preorder find
-Node *FibonacciHeap::preorderFind(Node *current, int key)
+Node *FibonacciHeap::levelorderFind(Node *current, int key)
 {
     if(NULL == current){
         return NULL;
     }
 
-    if(key == current->data){
-        return current;
-    }
-
+    queue<Node*> q;
     Node *result = NULL;
-    result = preorderFind(current->child, key);
-    if(NULL != result){
-        return result;
-    }
+    if(current->child)  q.push(current->child);
 
-    if(current->parent){ //parent of root is not NULL
-        result = preorderFind(current->sibling, key);
-    }
+    while(!q.empty()){
+        Node *temp = q.front();
+        q.pop();
 
+        Node *terminal = temp;
+        do{
+            if(temp->data == key){
+                return temp;
+            }
+            if(temp->child)   
+                q.push(temp->child);
+            temp = temp->right;
+        }while(temp != terminal);
+    }//while
     return result;
 }
 
 //find
 Node *FibonacciHeap::find(int key)
 {
-    if(NULL == head)
+    if(NULL == minNode)
         return NULL;
 
-    Node *current = head;
+    Node *current = minNode;
     Node *result = NULL;
-    while(current){
+    do{
+        //levelorder traversal
         
-        //preorder find
-        result = preorderFind(current, key);
-        if(result){
-            return result;
+        if(current->data == key){
+            result = current;
+        }else{
+            result = levelorderFind(current, key);
+            if(result != NULL)
+                break;
         }
-
-        current = current->sibling;
-    }
+        current = current->right;
+    }while(current!=minNode);
 
     return result;
 }
-*/
+
 //binomial tree levelorder traversal
 void FibonacciHeap::levelorderTraversal(Node *current)
 {
@@ -530,7 +555,6 @@ int main(int argc, char const *argv[]){
     Node *temp = myHeap.insert(8);
     myHeap.insert(15);
     myHeap.insert(4);
-    myHeap.consolidate();
     myHeap.dump();
 
     // Test minimum and extract min
@@ -539,12 +563,13 @@ int main(int argc, char const *argv[]){
     cout << "extract_min :" << myHeap.extract_min() << endl;
     myHeap.dump();
     cout << "minimum :" << myHeap.minimum() << endl;
-/*
+
     // Test decrease-key and delete
     cout << "\n\tTest decrease-key and delete" << endl;
     myHeap.dump();
     int decrease_value = 7;
-    Node *decrease_node = myHeap.decrease_key(myHeap.find(7), 4);
+
+    Node *decrease_node = myHeap.decrease_key(myHeap.find(7), 1);
     cout << "decrease-key from " << decrease_value << " to " 
         << decrease_node->data << endl;
     myHeap.dump();
@@ -553,14 +578,14 @@ int main(int argc, char const *argv[]){
     myHeap.dump();
 
     myHeap.delete_key(myHeap.find(6));
-    myHeap.delete_key(myHeap.find(4));
+    //myHeap.delete_key(myHeap.find(4));
 
     cout << "After delete" << endl;
     myHeap.dump();
 
     // Find the value
-    cout << "\n\tFind the value" << endl;
-    int find_value = 7;
+    int find_value = 9;
+    cout << "\n\tFind the value : " << find_value << endl;
     Node *find_node = myHeap.find(find_value);
     cout << "Find Node :";
     if(NULL != find_node){
@@ -572,7 +597,7 @@ int main(int argc, char const *argv[]){
     // Merge the two heap
     cout << "\n\tMerge the two heap" << endl;
     n=13;
-    int *random_data2 = random_case(20, n);
+    int *random_data2 = random_case(50, n);
 #if DEBUG
     cout << "Generate Data2 :";
     for(int i=0; i<n; i++){
@@ -583,9 +608,10 @@ int main(int argc, char const *argv[]){
 
     FibonacciHeap myHeap2(random_data2, n);
     myHeap2.dump();
+
     myHeap.merge(myHeap2);
     myHeap.dump();
-*/
+
     // Heap sort
     cout << "\n\tHeap sort" << endl;
     cout << "Heap sort :";
